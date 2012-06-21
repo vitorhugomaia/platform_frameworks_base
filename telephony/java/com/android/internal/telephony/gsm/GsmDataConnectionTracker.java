@@ -163,6 +163,8 @@ public final class GsmDataConnectionTracker extends DataConnectionTracker {
 
         if (dcac != null) {
             for (ApnContext apnContext : dcac.getApnListSync()) {
+                apnContext.setDataConnectionAc(null);
+                apnContext.setDataConnection(null);
                 apnContext.setReason(reason);
                 apnContext.setRetryCount(retryCount);
                 if (apnContext.getState() == State.FAILED) {
