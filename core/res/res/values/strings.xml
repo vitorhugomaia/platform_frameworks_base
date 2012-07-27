@@ -3576,4 +3576,8 @@
 
     <!-- "Done" button for MediaRouter chooser dialog when grouping routes. [CHAR LIMIT=NONE] -->
     <string name="media_route_chooser_grouping_done">Done</string>
+
+    <!-- BUILD TWEAKS. Long-press back kill application -->
+    <string name="app_killed_message">Application killed. Happy now?</string>
+    
 </resources>
