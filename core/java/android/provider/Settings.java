@@ -1990,7 +1990,105 @@ public final class Settings {
          */
         public static final String POINTER_SPEED = "pointer_speed";
 
-        /** @hide */
+        /**
+         * Use the Notification Power Widget? (Who wouldn't!)
+         *
+         * @hide
+         */
+        public static final String EXPANDED_VIEW_WIDGET = "expanded_view_widget";
+
+        /**
+         * Whether to hide the notification screen after clicking on a widget
+         * button
+         *
+         * @hide
+         */
+        public static final String EXPANDED_HIDE_ONCHANGE = "expanded_hide_onchange";
+
+        /**
+         * Hide scroll bar in power widget
+         *
+         * @hide
+         */
+        public static final String EXPANDED_HIDE_SCROLLBAR = "expanded_hide_scrollbar";
+
+        /**
+         * Haptic feedback in power widget
+         *
+         * @hide
+         */
+        public static final String EXPANDED_HAPTIC_FEEDBACK = "expanded_haptic_feedback";
+
+        /**
+         * Widget Buttons to Use
+         *
+         * @hide
+         */
+        public static final String WIDGET_BUTTONS = "expanded_widget_buttons";
+
+        /**
+         * Widget Buttons to Use - Tablet
+         *
+         * @hide
+         */
+        public static final String WIDGET_BUTTONS_TABLET = "expanded_widget_buttons_tablet";
+
+        /**
+        * Notification Power Widget - Custom Brightness Mode
+        * @hide
+        */
+        public static final String EXPANDED_BRIGHTNESS_MODE = "expanded_brightness_mode";
+
+        /**
+        * Notification Power Widget - Custom Network Mode
+        * @hide
+        */
+        public static final String EXPANDED_NETWORK_MODE = "expanded_network_mode";
+
+        /**
+        * Notification Power Widget - Custom Screen Timeout
+        * @hide
+        */
+        public static final String EXPANDED_SCREENTIMEOUT_MODE = "expanded_screentimeout_mode";
+
+        /**
+        * Notification Power Widget - Custom Ring Mode
+        * @hide
+        */
+        public static final String EXPANDED_RING_MODE = "expanded_ring_mode";
+
+        /**
+        * Notification Power Widget - Custom Torch Mode
+        * @hide
+        */
+        public static final String EXPANDED_FLASH_MODE = "expanded_flash_mode";
+
+        /**
+         * Whether custom light sensor levels & values are enabled. The value is
+         * boolean (1 or 0).
+         *
+         * @hide
+         */
+        public static final String LIGHT_SENSOR_CUSTOM = "light_sensor_custom";
+
+        /**
+         * Screen dim value to use if LIGHT_SENSOR_CUSTOM is set. The value is int.
+         * Default is android.os.BRIGHTNESS_DIM.
+         *
+         * @hide
+         */
+        public static final String LIGHT_SCREEN_DIM = "light_screen_dim";
+
+        /**
+         * Torch state (flashlight)
+         * @hide
+         */
+        public static final String TORCH_STATE = "torch_state";
+        
+        /**
+         * Display style of the status bar battery information
+         * @hide
+         */
         public static final String STATUS_BAR_BATTERY = "status_bar_battery";
 
         /**
