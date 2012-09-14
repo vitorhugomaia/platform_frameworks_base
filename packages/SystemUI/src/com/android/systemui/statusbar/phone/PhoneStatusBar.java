@@ -58,11 +58,13 @@ import android.util.Slog;
 import android.view.Choreographer;
 import android.view.Display;
 import android.view.Gravity;
+import android.view.HapticFeedbackConstants;
 import android.view.IWindowManager;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.WindowManager;
@@ -78,6 +80,9 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import com.android.internal.statusbar.StatusBarIcon;
 import com.android.internal.statusbar.StatusBarNotification;
+
+import com.android.systemui.statusbar.powerwidget.PowerWidget;
+
 import com.android.systemui.R;
 import com.android.systemui.recent.RecentTasksLoader;
 import com.android.systemui.statusbar.BaseStatusBar;
@@ -124,9 +129,10 @@ public class PhoneStatusBar extends BaseStatusBar {
     private static final boolean CLOSE_PANEL_WHEN_EMPTIED = true;
 
     private static final float BRIGHTNESS_CONTROL_PADDING = 0.15f;
+    private static final int BRIGHTNESS_CONTROL_LONG_PRESS_TIMEOUT = 750; // ms
+    private static final int BRIGHTNESS_CONTROL_LINGER_THRESHOLD = 20;
 
     private boolean mBrightnessControl;
-    private boolean mAutoBrightness;
 
     private static final int NOTIFICATION_PRIORITY_MULTIPLIER = 10; // see NotificationManagerService
     private static final int HIDE_ICONS_BELOW_SCORE = Notification.PRIORITY_LOW * NOTIFICATION_PRIORITY_MULTIPLIER;
@@ -220,6 +226,9 @@ public class PhoneStatusBar extends BaseStatusBar {
     int mTrackingPosition; // the position of the top of the tracking view.
     private boolean mPanelSlightlyVisible;
 
+    // the power widget
+    PowerWidget mPowerWidget;
+
     // ticker
     private Ticker mTicker;
     private View mTickerView;
@@ -242,7 +251,9 @@ public class PhoneStatusBar extends BaseStatusBar {
     float mFlingVelocity;
     int mFlingY;
     int[] mAbsPos = new int[2];
-    int mLinger = 0;
+    int mLinger;
+    int mInitialTouchX;
+    int mInitialTouchY;
     Runnable mPostCollapseCleanup = null;
 
     private AnimatorSet mLightsOutAnimation;
@@ -256,6 +267,15 @@ public class PhoneStatusBar extends BaseStatusBar {
 
     DisplayMetrics mDisplayMetrics = new DisplayMetrics();
 
+    Runnable mLongPressBrightnessChange = new Runnable() {
+        @Override
+        public void run() {
+            mStatusBarView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+            adjustBrightness(mInitialTouchX);
+            mLinger = BRIGHTNESS_CONTROL_LINGER_THRESHOLD + 1;
+        }
+    };
+ 
     class SettingsObserver extends ContentObserver {
         SettingsObserver(Handler handler) {
             super(handler);
@@ -277,11 +297,11 @@ public class PhoneStatusBar extends BaseStatusBar {
 
         public void update() {
             ContentResolver resolver = mContext.getContentResolver();
-            mBrightnessControl = Settings.System.getInt(resolver,
-                    Settings.System.STATUS_BAR_BRIGHTNESS_CONTROL, 0) != 0;
-            mAutoBrightness = Settings.System.getInt(resolver,
-                    Settings.System.SCREEN_BRIGHTNESS_MODE, 0) ==
-                    Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC;
+            boolean autoBrightness = Settings.System.getInt(
+                   resolver, Settings.System.SCREEN_BRIGHTNESS_MODE, 0) ==
+                   Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC;
+            mBrightnessControl = !autoBrightness && Settings.System.getInt(
+                    resolver, Settings.System.STATUS_BAR_BRIGHTNESS_CONTROL, 0) == 1;
         }
     }
 
@@ -488,7 +508,25 @@ public class PhoneStatusBar extends BaseStatusBar {
         mScrollView = (ScrollView)mStatusBarWindow.findViewById(R.id.scroll);
         mScrollView.setVerticalScrollBarEnabled(false); // less drawing during pulldowns
 
+        mPowerWidget = (PowerWidget)mStatusBarWindow.findViewById(R.id.exp_power_stat);
+        mPowerWidget.setGlobalButtonOnClickListener(new View.OnClickListener() {
+                    public void onClick(View v) {
+                        if(Settings.System.getInt(mContext.getContentResolver(),
+                                Settings.System.EXPANDED_HIDE_ONCHANGE, 0) == 1) {
+                            animateCollapse();
+                        }
+                    }
+                });
+        mPowerWidget.setGlobalButtonOnLongClickListener(new View.OnLongClickListener() {
+            public boolean onLongClick(View v) {
+                animateCollapse();
+                return true;
+            }
+        });
+
         mTicker = new MyTicker(context, mStatusBarView);
+
+
 
         TickerView tickerView = (TickerView)mStatusBarView.findViewById(R.id.tickerText);
         tickerView.mTicker = mTicker;
@@ -540,6 +578,7 @@ public class PhoneStatusBar extends BaseStatusBar {
         filter.addAction(Intent.ACTION_SCREEN_OFF);
         context.registerReceiver(mBroadcastReceiver, filter);
 
+        mPowerWidget.setupWidget();
         return mStatusBarView;
     }
 
@@ -754,6 +793,7 @@ public class PhoneStatusBar extends BaseStatusBar {
         StatusBarIconView view = new StatusBarIconView(mContext, slot, null);
         view.set(icon);
         mStatusIcons.addView(view, viewIndex, new LinearLayout.LayoutParams(mIconSize, mIconSize));
+        mPowerWidget.updateAllButtons();
     }
 
     public void updateIcon(String slot, int index, int viewIndex,
@@ -1608,6 +1648,34 @@ public class PhoneStatusBar extends BaseStatusBar {
         stopTracking();
     }
 
+    private void adjustBrightness(int x) {
+        float raw = ((float) x) / mScreenWidth;
+
+        // Add a padding to the brightness control on both sides to
+        // make it easier to reach min/max brightness
+        float padded = Math.min(1.0f - BRIGHTNESS_CONTROL_PADDING,
+                Math.max(BRIGHTNESS_CONTROL_PADDING, raw));
+        float value = (padded - BRIGHTNESS_CONTROL_PADDING) /
+                (1 - (2.0f * BRIGHTNESS_CONTROL_PADDING));
+
+        int newBrightness = mMinBrightness + (int) Math.round(value *
+                (android.os.PowerManager.BRIGHTNESS_ON - mMinBrightness));
+        newBrightness = Math.min(newBrightness, android.os.PowerManager.BRIGHTNESS_ON);
+        newBrightness = Math.max(newBrightness, mMinBrightness);
+
+        try {
+            IPowerManager power = IPowerManager.Stub.asInterface(
+                    ServiceManager.getService("power"));
+            if (power != null) {
+                power.setBacklightBrightness(newBrightness);
+                Settings.System.putInt(mContext.getContentResolver(),
+                        Settings.System.SCREEN_BRIGHTNESS, newBrightness);
+            }
+        } catch (RemoteException e) {
+            Slog.w(TAG, "Setting Brightness failed: " + e);
+        }
+    }
+
     boolean interceptTouchEvent(MotionEvent event) {
         if (SPEW) {
             Slog.d(TAG, "Touch: rawY=" + event.getRawY() + " event=" + event + " mDisabled="
@@ -1628,6 +1696,7 @@ public class PhoneStatusBar extends BaseStatusBar {
         final int action = event.getAction();
         final int statusBarSize = getStatusBarHeight();
         final int hitSize = statusBarSize*2;
+        final int x = (int)event.getRawX();
         final int y = (int)event.getRawY();
         if (action == MotionEvent.ACTION_DOWN) {
             if (!areLightsOn()) {
@@ -1635,6 +1704,9 @@ public class PhoneStatusBar extends BaseStatusBar {
             }
 
             mLinger = 0;
+            mInitialTouchX = x;
+            mInitialTouchY = y;
+            
             if (!mExpanded) {
                 mViewDelta = statusBarSize - y;
             } else {
@@ -1651,58 +1723,50 @@ public class PhoneStatusBar extends BaseStatusBar {
                 // We drop events at the edge of the screen to make the windowshade come
                 // down by accident less, especially when pushing open a device with a keyboard
                 // that rotates (like g1 and droid)
-                int x = (int)event.getRawX();
                 final int edgeBorder = mEdgeBorder;
                 if (x >= edgeBorder && x < mDisplayMetrics.widthPixels - edgeBorder) {
                     prepareTracking(y, !mExpanded);// opening if we're not already fully visible
                     trackMovement(event);
                 }
             }
-        } else if (mTracking) {
+            if (mTracking && mBrightnessControl) {
+                mHandler.removeCallbacks(mLongPressBrightnessChange);
+                mHandler.postDelayed(mLongPressBrightnessChange,
+                        BRIGHTNESS_CONTROL_LONG_PRESS_TIMEOUT);
+            }
+            } else if (mTracking) {
             trackMovement(event);
             if (action == MotionEvent.ACTION_MOVE) {
                 if (mAnimatingReveal && (y + mViewDelta) < mNotificationPanelMinHeight) {
-                    if (mBrightnessControl && !mAutoBrightness) {
+                    if (mBrightnessControl) {
                         mVelocityTracker.computeCurrentVelocity(1000);
                         float yVel = mVelocityTracker.getYVelocity();
                         yVel = Math.abs(yVel);
                         if (yVel < 50.0f) {
-                            if (mLinger > 20) {
-                                float x = (float) event.getRawX();
-                                float raw = (x / mScreenWidth);
-                                // Add a padding to the brightness control on both sides to make it easier
-                                // to reach min/max brightness
-                                float padded = Math.min(1.0f - BRIGHTNESS_CONTROL_PADDING, Math.max(BRIGHTNESS_CONTROL_PADDING, raw));
-                                float value = (padded - BRIGHTNESS_CONTROL_PADDING) / (1 - (2.0f * BRIGHTNESS_CONTROL_PADDING));
-                                int newBrightness = mMinBrightness + (int) Math.round(value *
-                                        (android.os.PowerManager.BRIGHTNESS_ON - mMinBrightness));
-                                newBrightness = Math.min(newBrightness, android.os.PowerManager.BRIGHTNESS_ON);
-                                newBrightness = Math.max(newBrightness, mMinBrightness);
-                                try {
-                                    IPowerManager power = IPowerManager.Stub.asInterface(ServiceManager.getService("power"));
-                                    if (power != null) {
-                                        power.setBacklightBrightness(newBrightness);
-                                        Settings.System.putInt(mContext.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS,
-                                                newBrightness);
-                                    }
-                                } catch (RemoteException e) {
-                                    Slog.w(TAG, "Setting Brightness failed: " + e);
+                                if (mLinger > BRIGHTNESS_CONTROL_LINGER_THRESHOLD) {
+                                    adjustBrightness(x);
+                                } else {
+                                    mLinger++;
                                 }
-                            } else {
-                                mLinger++;
+                            }
+                            int touchSlop = ViewConfiguration.get(mContext).getScaledTouchSlop();
+                            if (Math.abs(x - mInitialTouchX) > touchSlop ||
+                                    Math.abs(y - mInitialTouchY) > touchSlop) {
+                                mHandler.removeCallbacks(mLongPressBrightnessChange);
                             }
                         }
+                    } else  {
+                        mHandler.removeCallbacks(mLongPressBrightnessChange);
+                        mAnimatingReveal = false;
+                        updateExpandedViewPos(y + mViewDelta);
                     }
-                } else  {
-                    mAnimatingReveal = false;
-                    updateExpandedViewPos(y + mViewDelta);
-                }
-            } else if (action == MotionEvent.ACTION_UP
-                    || action == MotionEvent.ACTION_CANCEL) {
-                mLinger = 0;
-                mVelocityTracker.computeCurrentVelocity(1000);
+                } else if (action == MotionEvent.ACTION_UP
+                        || action == MotionEvent.ACTION_CANCEL) {
+                    mHandler.removeCallbacks(mLongPressBrightnessChange);
+                    mLinger = 0;
+                    mVelocityTracker.computeCurrentVelocity(1000);
 
-                float yVel = mVelocityTracker.getYVelocity();
+                    float yVel = mVelocityTracker.getYVelocity();
                 boolean negative = yVel < 0;
 
                 float xVel = mVelocityTracker.getXVelocity();

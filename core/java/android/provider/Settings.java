@@ -1437,6 +1437,21 @@ public final class Settings {
         public static final String ALWAYS_FINISH_ACTIVITIES =
                 "always_finish_activities";
 
+        /**
+         * Whether custom light sensor levels & values are enabled. The value is
+         * boolean (1 or 0).
+         *
+         * @hide
+         */
+        public static final String LIGHT_SENSOR_CUSTOM = "light_sensor_custom";
+
+        /**
+         * Screen dim value to use if LIGHT_SENSOR_CUSTOM is set. The value is int.
+         * Default is android.os.BRIGHTNESS_DIM.
+         *
+         * @hide
+         */
+        public static final String LIGHT_SCREEN_DIM = "light_screen_dim";
 
         /**
          * * Volume Overlay Mode. This is the style of the volume overlay panel.
@@ -2041,25 +2056,11 @@ public final class Settings {
         public static final String EXPANDED_HIDE_SCROLLBAR = "expanded_hide_scrollbar";
 
         /**
-         * Hide indicator in status bar widget
-         *
-         * @hide
-         */
-        public static final String EXPANDED_HIDE_INDICATOR = "expanded_hide_indicator";
-
-        /**
          * Haptic feedback in power widget
          *
          * @hide
          */
         public static final String EXPANDED_HAPTIC_FEEDBACK = "expanded_haptic_feedback";
-
-        /**
-         * Notification Indicator Color
-         *
-         * @hide
-         */
-        public static final String EXPANDED_VIEW_WIDGET_COLOR = "expanded_widget_color";
 
         /**
          * Widget Buttons to Use
