@@ -67,6 +67,8 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.VolumePanel;
+import android.provider.Settings.SettingNotFoundException;
+
 
 import com.android.internal.telephony.ITelephony;
 
@@ -636,6 +638,18 @@ public class AudioService extends IAudioService.Stub implements OnFinished {
         } else {
             mRingerModeAffectedStreams |= (1 << AudioSystem.STREAM_MUSIC);
         }
+
+        boolean linkNotificationWithVolume = Settings.System.getInt(mContentResolver,
+                Settings.System.VOLUME_LINK_NOTIFICATION, 1) == 1;
+        if (linkNotificationWithVolume) {
+            STREAM_VOLUME_ALIAS[AudioSystem.STREAM_NOTIFICATION] = AudioSystem.STREAM_RING;
+            STREAM_VOLUME_ALIAS_NON_VOICE[AudioSystem.STREAM_NOTIFICATION] = AudioSystem.STREAM_RING;
+        } else {
+            STREAM_VOLUME_ALIAS[AudioSystem.STREAM_NOTIFICATION] = AudioSystem.STREAM_NOTIFICATION;
+            STREAM_VOLUME_ALIAS_NON_VOICE[AudioSystem.STREAM_NOTIFICATION] = AudioSystem.STREAM_NOTIFICATION;
+        }
+        updateStreamVolumeAlias(false);
+
         Settings.System.putInt(cr,
                 Settings.System.MODE_RINGER_STREAMS_AFFECTED, mRingerModeAffectedStreams);
 
@@ -3121,6 +3135,8 @@ public class AudioService extends IAudioService.Stub implements OnFinished {
             super(new Handler());
             mContentResolver.registerContentObserver(Settings.System.getUriFor(
                 Settings.System.MODE_RINGER_STREAMS_AFFECTED), false, this);
+            mContentResolver.registerContentObserver(Settings.System.getUriFor(
+                Settings.System.VOLUME_LINK_NOTIFICATION), false, this);
         }
 
         @Override
@@ -3148,6 +3164,18 @@ public class AudioService extends IAudioService.Stub implements OnFinished {
                     mRingerModeAffectedStreams = ringerModeAffectedStreams;
                     setRingerModeInt(getRingerMode(), false);
                 }
+
+                boolean linkNotificationWithVolume = Settings.System.getInt(mContentResolver,
+                        Settings.System.VOLUME_LINK_NOTIFICATION, 1) == 1;
+                if (linkNotificationWithVolume) {
+                    STREAM_VOLUME_ALIAS[AudioSystem.STREAM_NOTIFICATION] = AudioSystem.STREAM_RING;
+                    STREAM_VOLUME_ALIAS_NON_VOICE[AudioSystem.STREAM_NOTIFICATION] = AudioSystem.STREAM_RING;
+
+                } else {
+                    STREAM_VOLUME_ALIAS[AudioSystem.STREAM_NOTIFICATION] = AudioSystem.STREAM_NOTIFICATION;
+                    STREAM_VOLUME_ALIAS_NON_VOICE[AudioSystem.STREAM_NOTIFICATION] = AudioSystem.STREAM_NOTIFICATION;
+                }
+                updateStreamVolumeAlias(false);
             }
         }
     }
