@@ -2205,6 +2205,12 @@ public final class Settings {
          */
         public static final String VOLUME_KEY_CURSOR_CONTROL = "volume_key_cursor_control";
 
+       /**
+         * Statusbar State
+         * @hide
+         */
+        public static final String EXPANDED_DESKTOP_STATE = "expanded_desktop_state";
+
         /**
          * Settings to backup. This is here so that it's in the same place as the settings
          * keys and easy to update.
