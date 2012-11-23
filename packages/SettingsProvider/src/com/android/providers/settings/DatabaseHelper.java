@@ -2180,6 +2180,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     R.string.def_car_dock_sound);
             loadStringSetting(stmt, Settings.Global.CAR_UNDOCK_SOUND,
                     R.string.def_car_undock_sound);
+            loadIntegerSetting(stmt, Settings.System.VOLUME_ADJUST_SOUNDS_ENABLED,
+                    R.integer.def_volume_adjust_sounds_enabled);
 
             loadSetting(stmt, Settings.Global.SET_INSTALL_LOCATION, 0);
             loadSetting(stmt, Settings.Global.DEFAULT_INSTALL_LOCATION,
