@@ -2308,6 +2308,12 @@ public final class Settings {
         */
         public static final String VOLUME_ADJUST_SOUNDS_ENABLED = "volume_adjust_sounds_enabled";
 
+         /**
+         * Expanded desktop
+         * @hide
+         */
+        public static final String EXPANDED_DESKTOP_STATE = "expanded_desktop_state";
+
         /**
          * Settings to backup. This is here so that it's in the same place as the settings
          * keys and easy to update.
