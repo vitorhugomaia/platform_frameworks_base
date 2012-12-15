@@ -423,11 +423,7 @@ class QuickSettings {
             rssiTile.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Intent intent = new Intent();
-                    intent.setComponent(new ComponentName(
-                            "com.android.settings",
-                            "com.android.settings.Settings$DataUsageSummaryActivity"));
-                    startSettingsActivity(intent);
+                    startSettingsActivity(android.provider.Settings.ACTION_DATA_ROAMING_SETTINGS);
                 }
             });
             mModel.addRSSITile(rssiTile, new QuickSettingsModel.RefreshCallback() {
