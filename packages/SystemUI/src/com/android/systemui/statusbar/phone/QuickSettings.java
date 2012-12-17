@@ -449,6 +449,25 @@ class QuickSettings {
             });
             parent.addView(rssiTile);
         }
+        
+        // Location
+        QuickSettingsTileView locationTile = (QuickSettingsTileView)
+                inflater.inflate(R.layout.quick_settings_tile, parent, false);
+        locationTile.setContent(R.layout.quick_settings_tile_location, inflater);
+        locationTile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startSettingsActivity(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            }
+        });
+        mModel.addLocationTile(locationTile, new QuickSettingsModel.RefreshCallback() {
+            @Override
+            public void refreshView(QuickSettingsTileView view, State state) {
+                TextView tv = (TextView) view.findViewById(R.id.location_textview);
+                tv.setText("Location: " + state.label);
+            }
+        });
+        parent.addView(locationTile);
 
         // Rotation Lock
         if (mContext.getResources().getBoolean(R.bool.quick_settings_show_rotation_lock)) {
@@ -604,6 +623,7 @@ class QuickSettings {
         });
         parent.addView(alarmTile);
 
+        /*
         // Location
         QuickSettingsTileView locationTile = (QuickSettingsTileView)
                 inflater.inflate(R.layout.quick_settings_tile, parent, false);
@@ -623,6 +643,7 @@ class QuickSettings {
             }
         });
         parent.addView(locationTile);
+        */
 
         // Wifi Display
         QuickSettingsTileView wifiDisplayTile = (QuickSettingsTileView)
