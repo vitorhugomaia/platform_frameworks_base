@@ -57,7 +57,9 @@ import android.hardware.display.DisplayManager;
 import android.hardware.display.WifiDisplayStatus;
 import android.os.AsyncTask;
 import android.os.Handler;
+import android.os.PowerManager;
 import android.os.RemoteException;
+import android.os.SystemClock;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.ContactsContract;
@@ -68,6 +70,7 @@ import android.util.Log;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnLongClickListener;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
@@ -492,6 +495,7 @@ class QuickSettings {
             parent.addView(rotationLockTile);
         }
 
+        /*
         // Battery
         QuickSettingsTileView batteryTile = (QuickSettingsTileView)
                 inflater.inflate(R.layout.quick_settings_tile, parent, false);
@@ -500,6 +504,27 @@ class QuickSettings {
             @Override
             public void onClick(View v) {
                 startSettingsActivity(Intent.ACTION_POWER_USAGE_SUMMARY);
+            }
+        });
+        */
+        
+
+        // Battery
+        QuickSettingsTileView batteryTile = (QuickSettingsTileView)
+                inflater.inflate(R.layout.quick_settings_tile, parent, false);
+        batteryTile.setContent(R.layout.quick_settings_tile_battery, inflater);
+        batteryTile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+                pm.goToSleep(SystemClock.uptimeMillis());
+            }
+        });
+        batteryTile.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                startSettingsActivity(Intent.ACTION_POWER_USAGE_SUMMARY);
+                return true;
             }
         });
         mModel.addBatteryTile(batteryTile, new QuickSettingsModel.RefreshCallback() {
