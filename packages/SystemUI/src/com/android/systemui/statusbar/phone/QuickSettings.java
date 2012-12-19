@@ -313,6 +313,13 @@ class QuickSettings {
                 }
             }
         });
+        userTile.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                startSettingsActivity(android.provider.Settings.ACTION_SYNC_SETTINGS);
+                return true;
+            }
+        });
         mModel.addUserTile(userTile, new QuickSettingsModel.RefreshCallback() {
             @Override
             public void refreshView(QuickSettingsTileView view, State state) {
