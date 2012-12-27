@@ -664,6 +664,25 @@ class QuickSettings {
             parent.addView(bluetoothTile);
         }
 
+        // ScrenOff tile
+        QuickSettingsTileView screenoffTile = (QuickSettingsTileView)
+                inflater.inflate(R.layout.quick_settings_tile, parent, false);
+        screenoffTile.setContent(R.layout.quick_settings_tile_screenoff, inflater);
+        screenoffTile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+                pm.goToSleep(SystemClock.uptimeMillis());
+            }
+        });
+        mModel.addScreenOffTile(screenoffTile, new QuickSettingsModel.RefreshCallback() {
+            @Override
+            public void refreshView(QuickSettingsTileView view, State state) {
+                TextView tv = (TextView) view.findViewById(R.id.screenoff_tileview);
+                tv.setText("SCREEN OFF");
+            }
+        });
+        parent.addView(screenoffTile);
     }
 
     private void addTemporaryTiles(final ViewGroup parent, final LayoutInflater inflater) {
