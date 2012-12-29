@@ -56,6 +56,7 @@ import android.graphics.drawable.LevelListDrawable;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.WifiDisplayStatus;
 import android.location.LocationManager;
+import android.net.ConnectivityManager;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Handler;
@@ -68,6 +69,7 @@ import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.Profile;
 import android.provider.Settings;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.util.Pair;
 import android.view.LayoutInflater;
@@ -454,7 +456,20 @@ class QuickSettings {
             rssiTile.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    TelephonyManager tm = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
+                    ConnectivityManager conMan = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+                    if(tm.getDataState() == TelephonyManager.DATA_DISCONNECTED){
+                        conMan.setMobileDataEnabled(true);
+                    }else{
+                        conMan.setMobileDataEnabled(false);
+                        }
+                    }
+                });
+            rssiTile.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
                     startSettingsActivity(android.provider.Settings.ACTION_DATA_ROAMING_SETTINGS);
+                    return true;
                 }
             });
             mModel.addRSSITile(rssiTile, new QuickSettingsModel.RefreshCallback() {
