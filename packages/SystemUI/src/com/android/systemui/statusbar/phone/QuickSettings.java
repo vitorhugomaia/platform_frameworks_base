@@ -695,7 +695,45 @@ class QuickSettings {
             }
         });
         parent.addView(screenoffTile);
-    }
+
+        // Reboot tile
+        QuickSettingsTileView rebootTile = (QuickSettingsTileView)
+                inflater.inflate(R.layout.quick_settings_tile, parent, false);
+        rebootTile.setContent(R.layout.quick_settings_tile_reboot, inflater);
+        rebootTile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    Process proc = Runtime.getRuntime()
+                            .exec(new String[]{ "su", "-c", "reboot" });
+                    proc.waitFor();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        }
+                }
+            });
+        rebootTile.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                try {
+                    Process proc = Runtime.getRuntime()
+                            .exec(new String[]{ "su", "-c", "reboot recovery" });
+                    proc.waitFor();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        }
+                return true;
+                }
+            });
+        mModel.addRebootTile(rebootTile, new QuickSettingsModel.RefreshCallback() {
+            @Override
+            public void refreshView(QuickSettingsTileView view, State state) {
+                TextView tv = (TextView) view.findViewById(R.id.reboot_tileview);
+                tv.setText("REBOOT");
+            }
+        });
+        parent.addView(rebootTile);
+        }
 
     private void addTemporaryTiles(final ViewGroup parent, final LayoutInflater inflater) {
         // Alarm tile

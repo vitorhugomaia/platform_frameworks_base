@@ -235,6 +235,10 @@ class QuickSettingsModel implements BluetoothStateChangeCallback,
     private RefreshCallback mScreenOffCallback;
     private State mScreenOffState = new State();
 
+    private QuickSettingsTileView mRebootTile;
+    private RefreshCallback mRebootCallback;
+    private State mRebootState = new State();
+
     public QuickSettingsModel(Context context) {
         mContext = context;
         mHandler = new Handler();
@@ -289,11 +293,19 @@ class QuickSettingsModel implements BluetoothStateChangeCallback,
         mUserState.avatar = avatar;
         mUserCallback.refreshView(mUserTile, mUserState);
     }
+
     // Screen
     void addScreenOffTile(QuickSettingsTileView view, RefreshCallback cb) {
         mScreenOffTile = view;
         mScreenOffCallback = cb;
         mScreenOffCallback.refreshView(mScreenOffTile, mScreenOffState);
+    }
+
+    // Reboot
+    void addRebootTile(QuickSettingsTileView view, RefreshCallback cb) {
+        mRebootTile = view;
+        mRebootCallback = cb;
+        mRebootCallback.refreshView(mRebootTile, mRebootState);
     }
 
     // Time
